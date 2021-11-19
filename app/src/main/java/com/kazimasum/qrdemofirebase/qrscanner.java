@@ -7,14 +7,12 @@ import android.Manifest;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.database.annotations.NotNull;
 import com.google.zxing.Result;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
@@ -23,6 +21,7 @@ import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -33,9 +32,13 @@ import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
 public class qrscanner extends AppCompatActivity implements ZXingScannerView.ResultHandler
 {
+    final int price =20;
+    Notification n = new Notification();
     ZXingScannerView scannerView;
-    DatabaseReference pay,user;
-    String Username,Email;
+    DatabaseReference pay,user,Token;
+    String Username;
+    String Email;
+    String token;
     long Money;
     long count_id=0;
     @Override
@@ -79,7 +82,6 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     count_id= snapshot.getChildrenCount();
-
                 }
                 count_id++;
             }
@@ -88,18 +90,28 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
 
             }
         });
-
+        Token= FirebaseDatabase.getInstance().getReference("Token/"+UserId);
+        Token.child("Token").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                token =(snapshot.getValue(String.class));
+            }
+            @Override
+            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+            }
+        });
         user= FirebaseDatabase.getInstance().getReference("Users/"+UserId);
         user.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Money = (snapshot.getValue(Userinfo.class).getMoney());
                 Username = (snapshot.getValue(Userinfo.class).getName());
-                user.child("money").setValue(Money-20);
+                user.child("money").setValue(Money-price);
                 pay.child(String.valueOf(count_id)).child("name").setValue(Username);
-                pay.child(String.valueOf(count_id)).child("money").setValue(20);
+                pay.child(String.valueOf(count_id)).child("money").setValue(price);
                 pay.child(String.valueOf(count_id)).child("time").setValue(formatter.format(date));
                 Toast.makeText(qrscanner.this,"Scan Success",Toast.LENGTH_LONG).show();
+                n.send_notification("Payment successful","20฿", token);
 //                MainActivity.qrtext.setText("Username");
                 onBackPressed();
             }

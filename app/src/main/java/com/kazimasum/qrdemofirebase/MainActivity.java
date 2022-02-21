@@ -8,8 +8,10 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -23,6 +25,9 @@ public class MainActivity extends AppCompatActivity
     Button qrbtn,logoutbtn;
     public static TextView qrtext;
     DatabaseReference Token;
+    private FirebaseAuth mAuth;
+    private String UserId;
+    private String permission;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +48,13 @@ public class MainActivity extends AppCompatActivity
                 }
             });
     }
+
+    protected void onStart(){
+        super.onStart();
+
+    }
+
+
 
     private void logout() {
         FirebaseAuth.getInstance().signOut();

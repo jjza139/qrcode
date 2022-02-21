@@ -37,6 +37,7 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
     ZXingScannerView scannerView;
     DatabaseReference pay,user,Token;
     String Username;
+    String plate;
     String Email;
     String token;
     long Money;
@@ -87,7 +88,6 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
             }
         });
         Token= FirebaseDatabase.getInstance().getReference("Token/"+UserId);
@@ -106,8 +106,10 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Money = (snapshot.getValue(Userinfo.class).getMoney());
                 Username = (snapshot.getValue(Userinfo.class).getName());
+                plate = (snapshot.getValue(Userinfo.class).getplate());
                 user.child("money").setValue(Money-price);
                 pay.child(String.valueOf(count_id)).child("name").setValue(Username);
+                pay.child(String.valueOf(count_id)).child("plate").setValue(plate);
                 pay.child(String.valueOf(count_id)).child("money").setValue(price);
                 pay.child(String.valueOf(count_id)).child("time").setValue(formatter.format(date));
                 Toast.makeText(qrscanner.this,"Scan Success",Toast.LENGTH_LONG).show();

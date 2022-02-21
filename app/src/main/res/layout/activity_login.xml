@@ -8,8 +8,8 @@
 
     <EditText
         android:id="@+id/editText_Email"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="158dp"
+        android:layout_height="46dp"
         android:layout_marginTop="124dp"
         android:ems="10"
         android:inputType="textEmailAddress"
@@ -19,8 +19,8 @@
 
     <EditText
         android:id="@+id/editText_Password"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="155dp"
+        android:layout_height="39dp"
         android:layout_marginTop="44dp"
         android:ems="10"
         android:inputType="textPassword"
@@ -42,10 +42,10 @@
         android:id="@+id/Text_Email"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="136dp"
+        android:layout_marginTop="140dp"
         android:text="Email"
         app:layout_constraintEnd_toStartOf="@+id/editText_Email"
-        app:layout_constraintHorizontal_bias="0.476"
+        app:layout_constraintHorizontal_bias="0.663"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -56,7 +56,7 @@
         android:layout_marginTop="56dp"
         android:text="Password"
         app:layout_constraintEnd_toStartOf="@+id/editText_Password"
-        app:layout_constraintHorizontal_bias="0.482"
+        app:layout_constraintHorizontal_bias="0.818"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/editText_Email" />
 </androidx.constraintlayout.widget.ConstraintLayout>

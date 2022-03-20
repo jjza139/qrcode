@@ -32,16 +32,18 @@ import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
 public class qrscanner extends AppCompatActivity implements ZXingScannerView.ResultHandler
 {
-    final int price =20;
-    Notification n = new Notification();
+    int price =20;
+    Notification noti = new Notification();
     ZXingScannerView scannerView;
-    DatabaseReference pay,user,Token;
+    DatabaseReference pay,user,Token,log;
     String Username;
     String plate;
     String Email;
     String token;
+    String status;
     long Money;
     long count_id=0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -49,7 +51,6 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
         scannerView=new ZXingScannerView(this);
         setContentView(scannerView);
         user= FirebaseDatabase.getInstance().getReference("Users");
-
         Dexter.withContext(getApplicationContext())
                 .withPermission(Manifest.permission.CAMERA)
                 .withListener(new PermissionListener() {
@@ -69,7 +70,6 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
                     }
                 }).check();
 
-
     }
 
     @Override
@@ -78,19 +78,9 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
         final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         String UserId=rawResult.getText().toString();
         pay= FirebaseDatabase.getInstance().getReference("pay/"+UserId);
-        pay.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    count_id= snapshot.getChildrenCount();
-                }
-                count_id++;
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
-        });
-        Token= FirebaseDatabase.getInstance().getReference("Token/"+UserId);
+        log= FirebaseDatabase.getInstance().getReference("log/"+UserId);
+        //// Token ////
+        Token= FirebaseDatabase.getInstance().getReference("Token/"+UserId); //get Token
         Token.child("Token").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
@@ -100,22 +90,39 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
             public void onCancelled(@NonNull @NotNull DatabaseError error) {
             }
         });
-        user= FirebaseDatabase.getInstance().getReference("Users/"+UserId);
-        user.addListenerForSingleValueEvent(new ValueEventListener() {
+        //// Token ////
+
+        pay.addListenerForSingleValueEvent(new ValueEventListener() { //count pay
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Money = (snapshot.getValue(Userinfo.class).getMoney());
-                Username = (snapshot.getValue(Userinfo.class).getName());
-                plate = (snapshot.getValue(Userinfo.class).getplate());
-                user.child("money").setValue(Money-price);
-                pay.child(String.valueOf(count_id)).child("name").setValue(Username);
-                pay.child(String.valueOf(count_id)).child("plate").setValue(plate);
-                pay.child(String.valueOf(count_id)).child("money").setValue(price);
-                pay.child(String.valueOf(count_id)).child("time").setValue(formatter.format(date));
-                Toast.makeText(qrscanner.this,"Scan Success",Toast.LENGTH_LONG).show();
-                n.send_notification("Payment successful","20฿", token);
-//                MainActivity.qrtext.setText("Username");
-                onBackPressed();
+                if (snapshot.exists()) { //check data
+                    count_id = snapshot.getChildrenCount();
+                    log.child("count_id").setValue(String.valueOf(count_id));
+                    pay.child(String.valueOf(count_id)).child("status").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                            status = (snapshot.getValue(String.class));
+                            log.child("status").setValue(status);
+                            if(status.equals("pending")){
+                                scan_two(UserId,count_id);
+                                Toast.makeText(qrscanner.this,"Scantwo",Toast.LENGTH_LONG).show();
+
+                            }else{
+                                count_id++;
+                                scan_first(UserId,count_id);
+                            }
+                        }
+                        @Override
+                        public void onCancelled(@NonNull @NotNull DatabaseError error) {
+                            Toast.makeText(qrscanner.this,"ERROR2"+count_id,Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+                }else {
+                    count_id++;
+                    scan_first(UserId, count_id);
+                }
+
             }
 
             @Override
@@ -126,7 +133,99 @@ public class qrscanner extends AppCompatActivity implements ZXingScannerView.Res
             }
         });
 
+
+
+        ///
+
+        // scan two
+        // check money
+        // calc time
+        // calc price
+//        user= FirebaseDatabase.getInstance().getReference("Users/"+UserId);
+//        user.addListenerForSingleValueEvent(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                Money = (snapshot.getValue(Userinfo.class).getMoney());
+//                user.child("money").setValue(Money-price);
+//                pay.child(String.valueOf(count_id)).child("name").setValue(Username);
+//                pay.child(String.valueOf(count_id)).child("plate").setValue(plate);
+//                pay.child(String.valueOf(count_id)).child("money").setValue(price);
+//                pay.child(String.valueOf(count_id)).child("time").setValue(formatter.format(date));
+//                Toast.makeText(qrscanner.this,"Scan Success",Toast.LENGTH_LONG).show();
+//                noti.send_notification("Payment successful","20฿", token);
+//                onBackPressed();
+//            }
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError error) {
+//                Toast.makeText(qrscanner.this,"Unknow User",Toast.LENGTH_LONG).show();
+//                onBackPressed();
+//            }
+//        });
+
     }
+
+    void scan_first(String UserId,long id){
+        final Date date = new Date();
+        final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+
+        user= FirebaseDatabase.getInstance().getReference("Users/"+UserId);
+        user.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                Money = (snapshot.getValue(Userinfo.class).getMoney());
+                Username = (snapshot.getValue(Userinfo.class).getName());
+                plate = (snapshot.getValue(Userinfo.class).getplate());
+//                user.child("money").setValue(Money-price);
+                pay.child(String.valueOf(id)).child("name").setValue(Username);
+                pay.child(String.valueOf(id)).child("plate").setValue(plate);
+                pay.child(String.valueOf(id)).child("status").setValue("pending");
+//                pay.child(String.valueOf(count_id)).child("money").setValue(price);
+                pay.child(String.valueOf(id)).child("time_in").setValue(formatter.format(date));
+                Toast.makeText(qrscanner.this,"Scan Success",Toast.LENGTH_LONG).show();
+                noti.send_notification("Payment successful","20฿", token);
+                onBackPressed(); //back
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(qrscanner.this,"Unknow User",Toast.LENGTH_LONG).show();
+//                MainActivity.qrtext.setText("Unknow User");
+                onBackPressed();
+            }
+        });
+    }
+
+    void scan_two(String UserId,long id){
+        final Date date = new Date();
+        final SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        final SimpleDateFormat formatter_noti = new SimpleDateFormat("dd-MM-yyyy");
+
+        user= FirebaseDatabase.getInstance().getReference("Users/"+UserId);
+        user.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Money = (snapshot.getValue(Userinfo.class).getMoney());
+                Username = (snapshot.getValue(Userinfo.class).getName());
+                plate = (snapshot.getValue(Userinfo.class).getplate());
+//                user.child("money").setValue(Money-price);
+                pay.child(String.valueOf(id)).child("status").setValue("success");
+//                pay.child(String.valueOf(count_id)).child("money").setValue(price);
+                pay.child(String.valueOf(id)).child("time_out").setValue(formatter.format(date));
+                Toast.makeText(qrscanner.this,"Scan Success",Toast.LENGTH_LONG).show();
+                noti.send_notification("Welcome to parking lot","Username: "+Username+"\nPlate:"+plate+"\nTime:"+formatter_noti.format(date), token);
+//                MainActivity.qrtext.setText("Username");
+                onBackPressed(); //back
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(qrscanner.this,"Unknow User",Toast.LENGTH_LONG).show();
+//                MainActivity.qrtext.setText("Unknow User");
+                onBackPressed();
+            }
+        });
+    }
+
 
     @Override
     protected void onPause() {
